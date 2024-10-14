@@ -100,6 +100,7 @@ if(__name__ == "__main__"):
 
     trainer = lt.Trainer(max_epochs=epochs, accelerator="gpu", devices=[1], logger=logger)
     trainer.fit(model, train_loader, val_dataloader)
+    model.save_model(f"D:\\Documents\\Uni\\DLL\\Code\\models\\")
 
     #for epoch in range(epochs):
     #    losses = []

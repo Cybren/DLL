@@ -15,7 +15,6 @@ class Modelwrapper(lt.LightningModule):
         model.eval()
         self.part = model.feature_extractor
         self.part.requires_grad_(False)
-        #self.part.encoder.requires_grad_(True)
         self.lastConv = torch.nn.Conv1d(512, 1, kernel_size=1, dtype=torch.float16)
         self.activation = torch.nn.LeakyReLU()
         self.linear = torch.nn.Linear(249, num_classes, dtype=torch.float16)
@@ -51,7 +50,6 @@ class Modelwrapper(lt.LightningModule):
         return proba
         
     def configure_optimizers(self):
-        #return torch.optim.Adam([self.lastConv.parameters() + self.linear.parameters()], lr=1e-3)
         #return torch.optim.SGD(self.parameters())
         optimizer = torch.optim.Adam(self.parameters(), eps=1e-6, lr=0.001)
         return optimizer
@@ -61,22 +59,17 @@ class Modelwrapper(lt.LightningModule):
     def training_step(self, batch):
         pred = self.get_proba_sigmoid(batch) if self.task == "multilabel" else self.get_proba_softmax(batch)
         labels = batch["labels"]
-        #pred = torch.rand(size=(32,num_classes), dtype=torch.float16).to("cuda:1")
-        #print("batch", batch["labels"])
         if(self.task=="multiclass"):
             labels = torch.nn.functional.one_hot(batch["labels"], self.num_classes).to(torch.float16)
-        #print("onehot: ", one_hot_label)
         loss = self.loss_func(pred, labels)
         #logging possible
-        self.log("training_loss", loss, )
-        #print(loss)
+        self.log("training_loss", loss)
         if(torch.isnan(loss)):
             print(pred)
             print(batch["labels"].shape)
             print(pred.shape)
             print(f"loss got nan")
-            exit(-1)
-        #losses.append(loss)
+            exit(-1) 
         return loss
     
     def validation_step(self, batch):
@@ -112,7 +105,6 @@ class Modelwrapper(lt.LightningModule):
         #print(load)
         try:
             model = Modelwrapper(model=model, num_classes=load["num_classes"], task=load["task"])
-            #model = Modelwrapper(model=model, num_classes=load["num_classes"], task="multilabel")
             model.load_state_dict(load["state_dict"])
         except KeyError:
             print("File does not contain the right keys")
